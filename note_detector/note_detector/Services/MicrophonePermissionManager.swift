@@ -14,7 +14,7 @@ enum PermissionStatus {
 
 protocol PermissionManagerProtocol {
     var microphonePermissionStatus: PermissionStatus { get }
-    func requestMicrophonePermission(completion: @escaping (Bool) -> Void) async
+    func requestMicrophonePermission(completion: @escaping (Bool) -> Void)
 }
 
 final class PermissionManager: PermissionManagerProtocol {
@@ -34,8 +34,8 @@ final class PermissionManager: PermissionManagerProtocol {
             }
         }()
     }
-    
-    func requestMicrophonePermission(completion: @escaping (Bool) -> Void) async {
+
+    func requestMicrophonePermission(completion: @escaping (Bool) -> Void) {
          AVAudioApplication.requestRecordPermission(completionHandler: completion)
     }
 }
