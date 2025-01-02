@@ -5,19 +5,20 @@
 //  Created by Yuriy Egorov on 11/8/24.
 //
 
-import Foundation
 import UIKit
+import Combine
 
 protocol NoteDetectorViewModelProtocol : ObservableObject {
-    var frequency: Int { get }
+    var frequency: Double { get }
     var alertData: AlertData { get }
     func startDetecting() async
 }
 
 final class NoteDetectorViewModel: NoteDetectorViewModelProtocol {
     private let permissionManager: PermissionManagerProtocol
+    private let frequencyDetector: FrequencyDetectorServiceProtocol
     
-    @Published var frequency: Int = 0
+    @Published var frequency: Double = 0
     @Published var alertData: AlertData = AlertData(
         title: "Permission is not granted",
         subtitle: "Please grant access to microphone in settings to use the app",
@@ -34,8 +35,22 @@ final class NoteDetectorViewModel: NoteDetectorViewModelProtocol {
         isPresented: false
     )
     
-    init(permissionManager: PermissionManagerProtocol = PermissionManager()) {
+    private var observables: Set<AnyCancellable> = []
+    
+    init(
+        permissionManager: PermissionManagerProtocol = PermissionManager(),
+        frequencyDetector: FrequencyDetectorServiceProtocol = FrequencyDetectorService()
+    ) {
         self.permissionManager = permissionManager
+        self.frequencyDetector = frequencyDetector
+        frequencyDetector
+            .frequencyPublisher()
+            .sink { [weak self] newValue in
+                self?.frequency = newValue
+            }
+            .store(
+                in: &self.observables
+            )
     }
     
     func startDetecting() {
@@ -57,6 +72,6 @@ final class NoteDetectorViewModel: NoteDetectorViewModelProtocol {
     
     private func startFetchingMicrophoneInput() {
         self.alertData.isPresented = false
-        self.frequency = 440
+        self.frequencyDetector.start()
     }
 }
